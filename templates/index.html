@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>مختار الفائزين</title>
+</head>
+<body>
+    <h1>اختر فائزاً من يوتيوب</h1>
+    <form method="POST">
+        <input type="text" name="video_id" placeholder="أدخل ID الفيديو هنا">
+        <button type="submit">اختيار الفائز</button>
+    </form>
+    
+    {% if winner %}
+        <h2>الفائز هو: {{ winner }}</h2>
+    {% endif %}
+</body>
+</html>
