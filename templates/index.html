@@ -50,7 +50,6 @@
             font-size: 16px;
         }
         
-        /* تبويبات */
         .tabs {
             display: flex;
             gap: 10px;
@@ -239,7 +238,7 @@
             padding: 25px 20px;
             background: #f8f9fa;
             border-radius: 12px;
-            min-height: 120px;
+            min-height: 140px;
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -247,6 +246,7 @@
             border: 2px dashed #e0e0e0;
             transition: all 0.5s ease;
             position: relative;
+            overflow: hidden;
         }
         
         .result-container.has-winner {
@@ -254,6 +254,12 @@
             background: linear-gradient(135deg, #f8f9fa 0%, #eef1ff 100%);
             border-style: solid;
             box-shadow: 0 0 30px rgba(102, 126, 234, 0.2);
+        }
+        
+        .result-container.spinning {
+            border-color: #ffc107;
+            background: linear-gradient(135deg, #fff8e1 0%, #ffecb3 100%);
+            border-style: solid;
         }
         
         .result-label {
@@ -271,6 +277,11 @@
             border-radius: 12px;
             box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
             margin-bottom: 10px;
+            min-height: 80px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
         }
         
         .winner-name {
@@ -280,8 +291,13 @@
             text-align: center;
             word-wrap: break-word;
             max-width: 100%;
-            animation: fadeInUp 0.6s ease;
             line-height: 1.4;
+            transition: all 0.05s ease;
+        }
+        
+        .winner-name.spinning {
+            color: #ffc107;
+            animation: spinText 0.05s infinite;
         }
         
         .winner-name.highlight {
@@ -291,6 +307,7 @@
             background-clip: text;
             font-size: 38px;
             text-shadow: 0 2px 20px rgba(102, 126, 234, 0.3);
+            animation: fadeInUp 0.6s ease, pulse 2s ease-in-out infinite;
         }
         
         .winner-name.highlight::before {
@@ -303,6 +320,12 @@
             content: " 🏆";
             -webkit-text-fill-color: initial;
             color: #fbbf24;
+        }
+        
+        @keyframes spinText {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
         }
         
         .winner-source {
@@ -321,6 +344,7 @@
             border-right: 4px solid #667eea;
             text-align: right;
             font-style: italic;
+            width: 100%;
         }
         
         .winner-comment-label {
@@ -349,6 +373,15 @@
             font-size: 48px;
             display: block;
             margin-bottom: 5px;
+        }
+        
+        .winner-emoji.spinning {
+            animation: bounce 0.1s infinite;
+        }
+        
+        @keyframes bounce {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.2); }
         }
         
         .error-message {
@@ -434,10 +467,6 @@
             50% { transform: scale(1.05); }
         }
         
-        .winner-name.highlight {
-            animation: fadeInUp 0.6s ease, pulse 2s ease-in-out infinite;
-        }
-        
         .example-names {
             display: flex;
             flex-wrap: wrap;
@@ -458,6 +487,19 @@
         .example-tag:hover {
             background: #667eea;
             color: white;
+        }
+        
+        /* مؤشر التحميل النصي */
+        .loading-dots::after {
+            content: '...';
+            animation: dots 1.5s steps(4, end) infinite;
+        }
+        
+        @keyframes dots {
+            0% { content: ''; }
+            25% { content: '.'; }
+            50% { content: '..'; }
+            75% { content: '...'; }
         }
         
         @media (max-width: 640px) {
@@ -621,23 +663,21 @@
         const loader = document.getElementById('loader');
         const confettiContainer = document.getElementById('confettiContainer');
         
+        // متغيرات التحكم في تأثير التمرير
+        let spinInterval = null;
+        let isSpinning = false;
+        
         // التبديل بين التبويبات
         tabBtns.forEach(btn => {
             btn.addEventListener('click', () => {
-                // إزالة التفعيل من جميع الأزرار
                 tabBtns.forEach(b => b.classList.remove('active'));
                 btn.classList.add('active');
-                
-                // إخفاء كل المحتويات
                 tabContents.forEach(c => c.classList.remove('active'));
-                
-                // إظهار المحتوى المطلوب
                 const tabId = btn.dataset.tab;
                 document.getElementById(`tab-${tabId}`).classList.add('active');
-                
-                // إعادة تعيين النتيجة عند تبديل التبويب
                 resetResult();
                 hideError();
+                stopSpin();
             });
         });
         
@@ -663,8 +703,74 @@
             } else {
                 namesInput.value = name;
             }
-            // تحديث العداد
             nameCount.textContent = getNamesFromInput().length;
+        }
+        
+        // دالة تأثير التمرير السريع للأسماء
+        function startSpin(names, callback) {
+            if (isSpinning) return;
+            isSpinning = true;
+            
+            // إظهار تأثير التمرير
+            winnerName.className = 'winner-name spinning';
+            winnerEmoji.className = 'winner-emoji spinning';
+            resultContainer.classList.add('spinning');
+            winnerSource.textContent = '🔄 جاري الاختيار...';
+            winnerComment.style.display = 'none';
+            commentCount.textContent = '';
+            commentCount.classList.remove('show');
+            
+            let index = 0;
+            const spinDuration = 3000; // 3 ثواني
+            const startTime = Date.now();
+            
+            // تغيير الاسم بسرعة
+            spinInterval = setInterval(() => {
+                // اختيار اسم عشوائي
+                const randomIndex = Math.floor(Math.random() * names.length);
+                winnerName.textContent = names[randomIndex];
+                
+                // تغيير الإيموجي بشكل عشوائي
+                const emojis = ['🎲', '🎯', '⭐', '✨', '🔥', '💫', '🌟'];
+                winnerEmoji.textContent = emojis[Math.floor(Math.random() * emojis.length)];
+                
+                index++;
+            }, 50); // تغيير كل 50 مللي ثانية
+            
+            // إيقاف التمرير بعد المدة المحددة
+            setTimeout(() => {
+                stopSpin();
+                
+                // اختيار الفائز النهائي
+                const winner = names[Math.floor(Math.random() * names.length)];
+                winnerName.textContent = winner;
+                winnerName.className = 'winner-name highlight';
+                winnerEmoji.textContent = '🎉';
+                winnerEmoji.className = 'winner-emoji';
+                resultContainer.classList.remove('spinning');
+                resultContainer.classList.add('has-winner');
+                winnerSource.textContent = `📋 من بين ${names.length} اسم`;
+                
+                // استدعاء callback إذا وجد
+                if (callback) callback(winner);
+                
+                // إظهار الكنفيتي
+                showConfetti();
+                
+                isSpinning = false;
+            }, spinDuration);
+        }
+        
+        // إيقاف التمرير
+        function stopSpin() {
+            if (spinInterval) {
+                clearInterval(spinInterval);
+                spinInterval = null;
+            }
+            isSpinning = false;
+            winnerName.className = 'winner-name';
+            winnerEmoji.className = 'winner-emoji';
+            resultContainer.classList.remove('spinning');
         }
         
         // اختيار فائز من الأسماء المكتوبة يدوياً
@@ -676,20 +782,14 @@
                 return;
             }
             
-            // اختيار اسم عشوائي
-            const winner = names[Math.floor(Math.random() * names.length)];
+            if (isSpinning) return;
             
-            // عرض الفائز
-            winnerName.textContent = winner;
-            winnerName.className = 'winner-name highlight';
-            winnerEmoji.textContent = '🎉';
-            winnerSource.textContent = `📋 من بين ${names.length} اسم مكتوب`;
-            winnerComment.style.display = 'none';
-            commentCount.textContent = '';
-            commentCount.classList.remove('show');
-            resultContainer.classList.add('has-winner');
+            // إعادة تعيين النتيجة السابقة
+            resetResult();
+            hideError();
             
-            showConfetti();
+            // بدء تأثير التمرير
+            startSpin(names);
         });
         
         // مسح جميع الأسماء
@@ -697,9 +797,10 @@
             namesInput.value = '';
             nameCount.textContent = '0';
             resetResult();
+            stopSpin();
         });
         
-        // اختيار فائز من يوتيوب
+        // اختيار فائز من يوتيوب مع تأثير التمرير
         pickBtn.addEventListener('click', async () => {
             const videoUrl = videoUrlInput.value.trim();
             
@@ -708,10 +809,13 @@
                 return;
             }
             
+            if (isSpinning) return;
+            
             pickBtn.disabled = true;
             loader.classList.add('show');
             hideError();
             resetResult();
+            stopSpin();
             
             try {
                 const response = await fetch('/api/pick-winner', {
@@ -728,66 +832,83 @@
                     throw new Error(data.error || 'حدث خطأ');
                 }
                 
-                // عرض اسم الفائز
-                winnerName.textContent = data.winner;
-                winnerName.className = 'winner-name highlight';
-                winnerEmoji.textContent = '🎉';
-                winnerSource.textContent = `📺 من تعليقات يوتيوب`;
-                
-                // عرض التعليق إذا وجد
-                if (data.winner_comment && data.winner_comment.trim() !== '') {
-                    commentText.textContent = data.winner_comment;
-                    winnerComment.style.display = 'block';
-                } else {
-                    winnerComment.style.display = 'none';
-                }
-                
-                // عرض عدد التعليقات فقط إذا كان العدد موجوداً وأكبر من 0
-                if (data.has_comments && data.total_comments > 0) {
-                    commentCount.textContent = `من بين ${data.total_comments} تعليق`;
-                    commentCount.classList.add('show');
-                } else {
-                    commentCount.textContent = '';
-                    commentCount.classList.remove('show');
-                }
-                
-                resultContainer.classList.add('has-winner');
-                showConfetti();
+                // عرض اسم الفائز مع تأثير التمرير
+                // نضع الأسماء في مصفوفة مؤقتة للتأثير
+                const tempNames = [data.winner, ...getRandomNames(5)];
+                startSpin(tempNames, (finalWinner) => {
+                    // بعد انتهاء التمرير، نعرض البيانات الحقيقية
+                    winnerName.textContent = data.winner;
+                    winnerName.className = 'winner-name highlight';
+                    winnerEmoji.textContent = '🎉';
+                    winnerEmoji.className = 'winner-emoji';
+                    winnerSource.textContent = `📺 من تعليقات يوتيوب`;
+                    
+                    if (data.winner_comment && data.winner_comment.trim() !== '') {
+                        commentText.textContent = data.winner_comment;
+                        winnerComment.style.display = 'block';
+                    } else {
+                        winnerComment.style.display = 'none';
+                    }
+                    
+                    if (data.has_comments && data.total_comments > 0) {
+                        commentCount.textContent = `من بين ${data.total_comments} تعليق`;
+                        commentCount.classList.add('show');
+                    } else {
+                        commentCount.textContent = '';
+                        commentCount.classList.remove('show');
+                    }
+                });
                 
             } catch (error) {
                 showError(error.message);
                 winnerName.textContent = '❌';
                 winnerName.className = 'winner-name';
                 winnerEmoji.textContent = '😅';
+                winnerEmoji.className = 'winner-emoji';
                 winnerSource.textContent = '';
                 winnerComment.style.display = 'none';
                 commentCount.textContent = '';
                 commentCount.classList.remove('show');
+                resultContainer.classList.remove('has-winner');
             } finally {
                 pickBtn.disabled = false;
                 loader.classList.remove('show');
             }
         });
         
+        // دالة للحصول على أسماء عشوائية للتأثير
+        function getRandomNames(count) {
+            const names = ['⭐⭐⭐', '✨✨✨', '🌟🌟🌟', '💫💫💫', '🔥🔥🔥'];
+            const result = [];
+            for (let i = 0; i < count; i++) {
+                result.push(names[Math.floor(Math.random() * names.length)]);
+            }
+            return result;
+        }
+        
         // إعادة تعيين
         resetBtn.addEventListener('click', () => {
             videoUrlInput.value = '';
             resetResult();
             hideError();
+            stopSpin();
             videoUrlInput.focus();
             confettiContainer.innerHTML = '';
         });
         
         // دالة إعادة تعيين النتيجة
         function resetResult() {
+            stopSpin();
             winnerName.textContent = '...';
             winnerName.className = 'winner-name';
             winnerEmoji.textContent = '🎉';
+            winnerEmoji.className = 'winner-emoji';
             winnerSource.textContent = '';
             winnerComment.style.display = 'none';
             commentCount.textContent = '';
             commentCount.classList.remove('show');
             resultContainer.classList.remove('has-winner');
+            resultContainer.classList.remove('spinning');
             confettiContainer.innerHTML = '';
         }
         
