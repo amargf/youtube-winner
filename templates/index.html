@@ -1,17 +1,26 @@
 <!DOCTYPE html>
-<html>
+<html lang="ar" dir="rtl">
 <head>
-    <title>مختار الفائزين</title>
+    <meta charset="UTF-8">
+    <title>مختار الفائزين الاحترافي</title>
+    <style>
+        body { font-family: sans-serif; text-align: center; background: #f4f4f9; padding: 50px; }
+        .card { background: white; padding: 30px; border-radius: 15px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); display: inline-block; }
+        input { padding: 10px; width: 300px; border: 1px solid #ddd; border-radius: 5px; }
+        button { padding: 10px 20px; background: #ff0000; color: white; border: none; border-radius: 5px; cursor: pointer; }
+        .winner { margin-top: 20px; color: #2ecc71; font-size: 24px; font-weight: bold; }
+    </style>
 </head>
 <body>
-    <h1>اختر فائزاً من يوتيوب</h1>
-    <form method="POST">
-        <input type="text" name="video_id" placeholder="أدخل ID الفيديو هنا">
-        <button type="submit">اختيار الفائز</button>
-    </form>
-    
-    {% if winner %}
-        <h2>الفائز هو: {{ winner }}</h2>
-    {% endif %}
+    <div class="card">
+        <h1>YouTube Winner Picker</h1>
+        <form method="POST">
+            <input type="text" name="video_id" placeholder="أدخل رابط الفيديو هنا..." required>
+            <button type="submit">بدء الاختيار</button>
+        </form>
+        {% if winner %}
+            <div class="winner">🎉 الفائز هو: {{ winner }}</div>
+        {% endif %}
+    </div>
 </body>
 </html>
