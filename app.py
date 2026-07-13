@@ -18,7 +18,6 @@ youtube = build('youtube', 'v3', developerKey=API_KEY)
 def extract_video_id(url):
     """
     استخراج video_id من أي نوع من روابط يوتيوب
-    يدعم: الروابط الطويلة، القصيرة، والمضمنة
     """
     patterns = [
         r'(?:youtube\.com\/watch\?v=)([\w-]+)',
@@ -39,7 +38,7 @@ def extract_video_id(url):
 
 def get_video_comments(video_id, max_results=100):
     """
-    جلب تعليقات الفيديو باستخدام YouTube API
+    جلب تعليقات الفيديو مع أسماء المستخدمين
     """
     try:
         request = youtube.commentThreads().list(
@@ -52,9 +51,21 @@ def get_video_comments(video_id, max_results=100):
         
         comments = []
         for item in response.get('items', []):
-            comment = item['snippet']['topLevelComment']['snippet']['textDisplay']
-            if comment.strip():
-                comments.append(comment)
+            # استخراج معلومات التعليق
+            snippet = item['snippet']['topLevelComment']['snippet']
+            
+            # اسم المستخدم (صاحب التعليق)
+            author = snippet.get('authorDisplayName', 'مستخدم مجهول')
+            
+            # نص التعليق
+            text = snippet.get('textDisplay', '').strip()
+            
+            # إضافة معلومات المستخدم مع التعليق
+            comments.append({
+                'author': author,
+                'text': text,
+                'full': f"{author}: {text}" if text else author
+            })
         
         return comments
         
@@ -111,13 +122,18 @@ def pick_winner():
         if not comments:
             return jsonify({'error': 'لا توجد تعليقات لعرضها'}), 404
         
+        # محاكاة تأخير لمدة ثانيتين
         time.sleep(2)
         
-        winner = choose_random_winner(comments)
+        # اختيار الفائز
+        winner_data = choose_random_winner(comments)
         
+        # إرجاع اسم المستخدم مع التعليق
         return jsonify({
             'success': True,
-            'winner': winner,
+            'winner': winner_data['author'],  # اسم المستخدم فقط
+            'winner_comment': winner_data['text'],  # نص التعليق (اختياري)
+            'winner_full': winner_data['full'],  # الاسم + التعليق (للنسخ الاحتياطي)
             'total_comments': len(comments)
         })
         
@@ -128,6 +144,5 @@ def pick_winner():
 
 
 if __name__ == '__main__':
-    # للحصول على أفضل أداء على Render
     port = int(os.environ.get('PORT', 5000))
     app.run(host='0.0.0.0', port=port, debug=False)
