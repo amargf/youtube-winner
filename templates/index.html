@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>اختيار فائز عشوائي من يوتيوب</title>
+    <title>اختيار فائز عشوائي - يوتيوب</title>
     <style>
         * {
             margin: 0;
@@ -26,7 +26,7 @@
             background: white;
             border-radius: 20px;
             padding: 40px;
-            max-width: 600px;
+            max-width: 700px;
             width: 100%;
             box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
             transition: transform 0.3s ease;
@@ -39,15 +39,63 @@
         h1 {
             color: #333;
             font-size: 28px;
-            margin-bottom: 10px;
+            margin-bottom: 5px;
             text-align: center;
         }
         
         .subtitle {
             color: #666;
             text-align: center;
-            margin-bottom: 30px;
+            margin-bottom: 25px;
             font-size: 16px;
+        }
+        
+        /* تبويبات */
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 25px;
+            background: #f0f0f0;
+            padding: 5px;
+            border-radius: 15px;
+        }
+        
+        .tab-btn {
+            flex: 1;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 12px;
+            background: transparent;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            font-family: inherit;
+            font-size: 15px;
+            color: #666;
+        }
+        
+        .tab-btn.active {
+            background: white;
+            color: #667eea;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.2);
+        }
+        
+        .tab-btn:hover:not(.active) {
+            background: rgba(255,255,255,0.5);
+        }
+        
+        .tab-content {
+            display: none;
+            animation: fadeIn 0.4s ease;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
         }
         
         .input-group {
@@ -81,9 +129,32 @@
             box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
         }
         
-        input[type="text"]::placeholder {
-            color: #aaa;
-            font-size: 14px;
+        textarea {
+            width: 100%;
+            padding: 14px 18px;
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            background: #f8f9fa;
+            color: #333;
+            font-family: inherit;
+            resize: vertical;
+            min-height: 150px;
+            line-height: 1.8;
+        }
+        
+        textarea:focus {
+            outline: none;
+            border-color: #667eea;
+            background: white;
+            box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
+        }
+        
+        .hint {
+            color: #888;
+            font-size: 13px;
+            margin-top: 5px;
         }
         
         .button-group {
@@ -129,6 +200,40 @@
             transform: translateY(-2px);
         }
         
+        .btn-success {
+            background: #28a745;
+        }
+        
+        .btn-success:hover:not(:disabled) {
+            background: #218838;
+            transform: translateY(-2px);
+        }
+        
+        .btn-warning {
+            background: #ffc107;
+            color: #333;
+        }
+        
+        .btn-warning:hover:not(:disabled) {
+            background: #e0a800;
+            transform: translateY(-2px);
+        }
+        
+        .names-counter {
+            background: #f0f0f0;
+            padding: 8px 15px;
+            border-radius: 20px;
+            display: inline-block;
+            font-size: 14px;
+            color: #555;
+            margin-bottom: 10px;
+        }
+        
+        .names-counter span {
+            font-weight: bold;
+            color: #667eea;
+        }
+        
         .result-container {
             margin-top: 30px;
             padding: 25px 20px;
@@ -161,7 +266,7 @@
         .winner-wrapper {
             width: 100%;
             text-align: center;
-            padding: 15px;
+            padding: 20px;
             background: white;
             border-radius: 12px;
             box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
@@ -184,7 +289,7 @@
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
-            font-size: 36px;
+            font-size: 38px;
             text-shadow: 0 2px 20px rgba(102, 126, 234, 0.3);
         }
         
@@ -198,6 +303,12 @@
             content: " 🏆";
             -webkit-text-fill-color: initial;
             color: #fbbf24;
+        }
+        
+        .winner-source {
+            margin-top: 8px;
+            font-size: 13px;
+            color: #999;
         }
         
         .winner-comment {
@@ -227,7 +338,7 @@
             background: rgba(102, 126, 234, 0.1);
             padding: 6px 16px;
             border-radius: 20px;
-            display: none; /* مخفي افتراضياً */
+            display: none;
         }
         
         .comment-count.show {
@@ -327,6 +438,28 @@
             animation: fadeInUp 0.6s ease, pulse 2s ease-in-out infinite;
         }
         
+        .example-names {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+            margin-top: 8px;
+        }
+        
+        .example-tag {
+            background: #e9ecef;
+            padding: 4px 12px;
+            border-radius: 15px;
+            font-size: 12px;
+            color: #555;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .example-tag:hover {
+            background: #667eea;
+            color: white;
+        }
+        
         @media (max-width: 640px) {
             .container {
                 padding: 25px;
@@ -360,6 +493,10 @@
             .winner-wrapper {
                 padding: 12px;
             }
+            
+            .tabs {
+                flex-direction: column;
+            }
         }
         
         @media (max-width: 400px) {
@@ -371,11 +508,6 @@
                 font-size: 20px;
             }
             
-            input[type="text"] {
-                padding: 12px 14px;
-                font-size: 14px;
-            }
-            
             .winner-name.highlight {
                 font-size: 22px;
             }
@@ -385,21 +517,59 @@
 <body>
     <div class="container">
         <h1>🎯 اختيار فائز عشوائي</h1>
-        <p class="subtitle">من تعليقات فيديو يوتيوب</p>
+        <p class="subtitle">من تعليقات يوتيوب أو أسماء مكتوبة يدوياً</p>
         
-        <div class="input-group">
-            <label for="videoUrl">رابط فيديو يوتيوب</label>
-            <input 
-                type="text" 
-                id="videoUrl" 
-                placeholder="أدخل رابط الفيديو هنا..."
-                dir="ltr"
-            >
+        <!-- تبويبات -->
+        <div class="tabs">
+            <button class="tab-btn active" data-tab="youtube">📺 يوتيوب</button>
+            <button class="tab-btn" data-tab="manual">✏️ كتابة يدوية</button>
         </div>
         
-        <div class="button-group">
-            <button class="btn-primary" id="pickBtn">🎲 اختر الفائز</button>
-            <button class="btn-secondary" id="resetBtn">🔄 إعادة تعيين</button>
+        <!-- تبويب يوتيوب -->
+        <div class="tab-content active" id="tab-youtube">
+            <div class="input-group">
+                <label for="videoUrl">رابط فيديو يوتيوب</label>
+                <input 
+                    type="text" 
+                    id="videoUrl" 
+                    placeholder="أدخل رابط الفيديو هنا..."
+                    dir="ltr"
+                >
+            </div>
+            
+            <div class="button-group">
+                <button class="btn-primary" id="pickBtn">🎲 اختر الفائز</button>
+                <button class="btn-secondary" id="resetBtn">🔄 إعادة تعيين</button>
+            </div>
+        </div>
+        
+        <!-- تبويب كتابة يدوية -->
+        <div class="tab-content" id="tab-manual">
+            <div class="input-group">
+                <label for="namesInput">📝 أدخل الأسماء (اسم واحد في كل سطر)</label>
+                <textarea 
+                    id="namesInput" 
+                    placeholder="أحمد&#10;محمد&#10;سارة&#10;فاطمة&#10;علي"
+                ></textarea>
+                <div class="hint">
+                    💡 أدخل اسماً واحداً في كل سطر
+                    <span class="names-counter" id="namesCounter">عدد الأسماء: <span id="nameCount">0</span></span>
+                </div>
+                <div class="example-names">
+                    <span class="example-tag" onclick="addExample('أحمد')">أحمد</span>
+                    <span class="example-tag" onclick="addExample('محمد')">محمد</span>
+                    <span class="example-tag" onclick="addExample('سارة')">سارة</span>
+                    <span class="example-tag" onclick="addExample('فاطمة')">فاطمة</span>
+                    <span class="example-tag" onclick="addExample('علي')">علي</span>
+                    <span class="example-tag" onclick="addExample('نور')">نور</span>
+                    <span class="example-tag" onclick="addExample('ليلى')">ليلى</span>
+                </div>
+            </div>
+            
+            <div class="button-group">
+                <button class="btn-success" id="pickManualBtn">🎲 اختر من الأسماء</button>
+                <button class="btn-warning" id="clearNamesBtn">🗑️ مسح الكل</button>
+            </div>
         </div>
         
         <div class="loader" id="loader"></div>
@@ -409,6 +579,7 @@
             <div class="winner-wrapper" id="winnerWrapper">
                 <span class="winner-emoji" id="winnerEmoji">🎉</span>
                 <div class="winner-name" id="winnerName">...</div>
+                <div class="winner-source" id="winnerSource"></div>
                 <div class="winner-comment" id="winnerComment" style="display:none;">
                     <span class="winner-comment-label">📝 التعليق:</span>
                     <span id="commentText"></span>
@@ -423,11 +594,25 @@
     <div class="confetti-container" id="confettiContainer"></div>
     
     <script>
+        // عناصر التبويبات
+        const tabBtns = document.querySelectorAll('.tab-btn');
+        const tabContents = document.querySelectorAll('.tab-content');
+        
+        // عناصر يوتيوب
         const videoUrlInput = document.getElementById('videoUrl');
         const pickBtn = document.getElementById('pickBtn');
         const resetBtn = document.getElementById('resetBtn');
+        
+        // عناصر الكتابة اليدوية
+        const namesInput = document.getElementById('namesInput');
+        const pickManualBtn = document.getElementById('pickManualBtn');
+        const clearNamesBtn = document.getElementById('clearNamesBtn');
+        const nameCount = document.getElementById('nameCount');
+        
+        // عناصر النتيجة
         const winnerName = document.getElementById('winnerName');
         const winnerEmoji = document.getElementById('winnerEmoji');
+        const winnerSource = document.getElementById('winnerSource');
         const winnerComment = document.getElementById('winnerComment');
         const commentText = document.getElementById('commentText');
         const commentCount = document.getElementById('commentCount');
@@ -436,12 +621,85 @@
         const loader = document.getElementById('loader');
         const confettiContainer = document.getElementById('confettiContainer');
         
-        // إزالة حالة الفائز عند تغيير الرابط
-        videoUrlInput.addEventListener('input', () => {
+        // التبديل بين التبويبات
+        tabBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                // إزالة التفعيل من جميع الأزرار
+                tabBtns.forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                
+                // إخفاء كل المحتويات
+                tabContents.forEach(c => c.classList.remove('active'));
+                
+                // إظهار المحتوى المطلوب
+                const tabId = btn.dataset.tab;
+                document.getElementById(`tab-${tabId}`).classList.add('active');
+                
+                // إعادة تعيين النتيجة عند تبديل التبويب
+                resetResult();
+                hideError();
+            });
+        });
+        
+        // تحديث عدد الأسماء
+        namesInput.addEventListener('input', () => {
+            const names = getNamesFromInput();
+            nameCount.textContent = names.length;
+        });
+        
+        // دالة جلب الأسماء من المدخل
+        function getNamesFromInput() {
+            return namesInput.value
+                .split('\n')
+                .map(name => name.trim())
+                .filter(name => name.length > 0);
+        }
+        
+        // إضافة اسم مثال
+        function addExample(name) {
+            const current = namesInput.value.trim();
+            if (current) {
+                namesInput.value = current + '\n' + name;
+            } else {
+                namesInput.value = name;
+            }
+            // تحديث العداد
+            nameCount.textContent = getNamesFromInput().length;
+        }
+        
+        // اختيار فائز من الأسماء المكتوبة يدوياً
+        pickManualBtn.addEventListener('click', () => {
+            const names = getNamesFromInput();
+            
+            if (names.length === 0) {
+                showError('الرجاء إدخال اسم واحد على الأقل');
+                return;
+            }
+            
+            // اختيار اسم عشوائي
+            const winner = names[Math.floor(Math.random() * names.length)];
+            
+            // عرض الفائز
+            winnerName.textContent = winner;
+            winnerName.className = 'winner-name highlight';
+            winnerEmoji.textContent = '🎉';
+            winnerSource.textContent = `📋 من بين ${names.length} اسم مكتوب`;
+            winnerComment.style.display = 'none';
+            commentCount.textContent = '';
+            commentCount.classList.remove('show');
+            resultContainer.classList.add('has-winner');
+            
+            showConfetti();
+        });
+        
+        // مسح جميع الأسماء
+        clearNamesBtn.addEventListener('click', () => {
+            namesInput.value = '';
+            nameCount.textContent = '0';
             resetResult();
         });
         
-        // اختيار الفائز
+        // اختيار فائز من يوتيوب
         pickBtn.addEventListener('click', async () => {
             const videoUrl = videoUrlInput.value.trim();
             
@@ -450,7 +708,6 @@
                 return;
             }
             
-            // تعطيل الزر وعرض التحميل
             pickBtn.disabled = true;
             loader.classList.add('show');
             hideError();
@@ -475,6 +732,7 @@
                 winnerName.textContent = data.winner;
                 winnerName.className = 'winner-name highlight';
                 winnerEmoji.textContent = '🎉';
+                winnerSource.textContent = `📺 من تعليقات يوتيوب`;
                 
                 // عرض التعليق إذا وجد
                 if (data.winner_comment && data.winner_comment.trim() !== '') {
@@ -494,8 +752,6 @@
                 }
                 
                 resultContainer.classList.add('has-winner');
-                
-                // إظهار الكنفيتي
                 showConfetti();
                 
             } catch (error) {
@@ -503,6 +759,7 @@
                 winnerName.textContent = '❌';
                 winnerName.className = 'winner-name';
                 winnerEmoji.textContent = '😅';
+                winnerSource.textContent = '';
                 winnerComment.style.display = 'none';
                 commentCount.textContent = '';
                 commentCount.classList.remove('show');
@@ -526,6 +783,7 @@
             winnerName.textContent = '...';
             winnerName.className = 'winner-name';
             winnerEmoji.textContent = '🎉';
+            winnerSource.textContent = '';
             winnerComment.style.display = 'none';
             commentCount.textContent = '';
             commentCount.classList.remove('show');
@@ -562,13 +820,12 @@
                 confettiContainer.appendChild(confetti);
             }
             
-            // إزالة الكنفيتي بعد 5 ثواني
             setTimeout(() => {
                 confettiContainer.innerHTML = '';
             }, 5000);
         }
         
-        // الضغط على Enter لتشغيل الاختيار
+        // الضغط على Enter في حقل الرابط
         videoUrlInput.addEventListener('keypress', (e) => {
             if (e.key === 'Enter') {
                 pickBtn.click();
