@@ -227,6 +227,10 @@
             background: rgba(102, 126, 234, 0.1);
             padding: 6px 16px;
             border-radius: 20px;
+            display: none; /* مخفي افتراضياً */
+        }
+        
+        .comment-count.show {
             display: inline-block;
         }
         
@@ -357,6 +361,25 @@
                 padding: 12px;
             }
         }
+        
+        @media (max-width: 400px) {
+            .container {
+                padding: 20px;
+            }
+            
+            h1 {
+                font-size: 20px;
+            }
+            
+            input[type="text"] {
+                padding: 12px 14px;
+                font-size: 14px;
+            }
+            
+            .winner-name.highlight {
+                font-size: 22px;
+            }
+        }
     </style>
 </head>
 <body>
@@ -413,10 +436,12 @@
         const loader = document.getElementById('loader');
         const confettiContainer = document.getElementById('confettiContainer');
         
+        // إزالة حالة الفائز عند تغيير الرابط
         videoUrlInput.addEventListener('input', () => {
             resetResult();
         });
         
+        // اختيار الفائز
         pickBtn.addEventListener('click', async () => {
             const videoUrl = videoUrlInput.value.trim();
             
@@ -425,6 +450,7 @@
                 return;
             }
             
+            // تعطيل الزر وعرض التحميل
             pickBtn.disabled = true;
             loader.classList.add('show');
             hideError();
@@ -451,16 +477,25 @@
                 winnerEmoji.textContent = '🎉';
                 
                 // عرض التعليق إذا وجد
-                if (data.winner_comment) {
+                if (data.winner_comment && data.winner_comment.trim() !== '') {
                     commentText.textContent = data.winner_comment;
                     winnerComment.style.display = 'block';
                 } else {
                     winnerComment.style.display = 'none';
                 }
                 
-                commentCount.textContent = `من بين ${data.total_comments} تعليق`;
+                // عرض عدد التعليقات فقط إذا كان العدد موجوداً وأكبر من 0
+                if (data.has_comments && data.total_comments > 0) {
+                    commentCount.textContent = `من بين ${data.total_comments} تعليق`;
+                    commentCount.classList.add('show');
+                } else {
+                    commentCount.textContent = '';
+                    commentCount.classList.remove('show');
+                }
+                
                 resultContainer.classList.add('has-winner');
                 
+                // إظهار الكنفيتي
                 showConfetti();
                 
             } catch (error) {
@@ -469,12 +504,15 @@
                 winnerName.className = 'winner-name';
                 winnerEmoji.textContent = '😅';
                 winnerComment.style.display = 'none';
+                commentCount.textContent = '';
+                commentCount.classList.remove('show');
             } finally {
                 pickBtn.disabled = false;
                 loader.classList.remove('show');
             }
         });
         
+        // إعادة تعيين
         resetBtn.addEventListener('click', () => {
             videoUrlInput.value = '';
             resetResult();
@@ -483,25 +521,30 @@
             confettiContainer.innerHTML = '';
         });
         
+        // دالة إعادة تعيين النتيجة
         function resetResult() {
             winnerName.textContent = '...';
             winnerName.className = 'winner-name';
             winnerEmoji.textContent = '🎉';
             winnerComment.style.display = 'none';
             commentCount.textContent = '';
+            commentCount.classList.remove('show');
             resultContainer.classList.remove('has-winner');
             confettiContainer.innerHTML = '';
         }
         
+        // دالة عرض الخطأ
         function showError(message) {
             errorMessage.textContent = message;
             errorMessage.classList.add('show');
         }
         
+        // دالة إخفاء الخطأ
         function hideError() {
             errorMessage.classList.remove('show');
         }
         
+        // دالة إظهار الكنفيتي
         function showConfetti() {
             confettiContainer.innerHTML = '';
             const colors = ['#667eea', '#764ba2', '#fbbf24', '#34d399', '#f472b6', '#60a5fa', '#fb923c'];
@@ -519,17 +562,20 @@
                 confettiContainer.appendChild(confetti);
             }
             
+            // إزالة الكنفيتي بعد 5 ثواني
             setTimeout(() => {
                 confettiContainer.innerHTML = '';
             }, 5000);
         }
         
+        // الضغط على Enter لتشغيل الاختيار
         videoUrlInput.addEventListener('keypress', (e) => {
             if (e.key === 'Enter') {
                 pickBtn.click();
             }
         });
         
+        // تحميل تلقائي للرابط من الحافظة
         if (navigator.clipboard) {
             document.addEventListener('paste', async (e) => {
                 const text = await navigator.clipboard.readText();
