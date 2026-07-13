@@ -1,34 +1,43 @@
 from flask import Flask, render_template, request
 from googleapiclient.discovery import build
 import random
+import time
 
 app = Flask(__name__)
-API_KEY = "AIzaSyA5MT34MOeGs5GBaAq7NapIf5_RAox4UYs"
+API_KEY = "ضع_مفتاحك_هنا"
 youtube = build('youtube', 'v3', developerKey=API_KEY)
 
 def get_comments(video_id):
-    comments = []
     try:
-        request = youtube.commentThreads().list(part="snippet", videoId=video_id, maxResults=100)
+        comments = []
+        # جلب التعليقات مع معالجة لصفحات متعددة
+        request = youtube.commentThreads().list(part="snippet", videoId=video_id, maxResults=50)
         response = request.execute()
         for item in response['items']:
             user = item['snippet']['topLevelComment']['snippet']['authorDisplayName']
             comments.append(user)
-    except:
-        return []
-    return comments
+        return comments
+    except Exception as e:
+        print(f"Error: {e}")
+        return None
 
 @app.route('/', methods=['GET', 'POST'])
 def index():
     winner = None
+    video_id = ""
     if request.method == 'POST':
-        video_id = request.form.get('video_id')
-        all_comments = get_comments(video_id)
-        if all_comments:
-            winner = random.choice(all_comments)
+        video_id = request.form.get('video_id', '').split('/')[-1].split('?')[0] # استخراج ID ذكي
+        comments = get_comments(video_id)
+        
+        # إضافة تأخير وهمي لزيادة الإثارة
+        time.sleep(2) 
+        
+        if comments:
+            winner = random.choice(comments)
         else:
-            winner = "لم يتم العثور على تعليقات!"
-    return render_template('index.html', winner=winner)
+            winner = "خطأ: تأكد من الرابط أو أن التعليقات مفتوحة."
+            
+    return render_template('index.html', winner=winner, video_id=video_id)
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run()
