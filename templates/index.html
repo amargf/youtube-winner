@@ -132,38 +132,52 @@
         
         .result-container {
             margin-top: 30px;
-            padding: 20px;
+            padding: 25px 20px;
             background: #f8f9fa;
             border-radius: 12px;
-            min-height: 100px;
+            min-height: 120px;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
             border: 2px dashed #e0e0e0;
             transition: all 0.5s ease;
+            position: relative;
         }
         
         .result-container.has-winner {
             border-color: #667eea;
             background: linear-gradient(135deg, #f8f9fa 0%, #eef1ff 100%);
             border-style: solid;
+            box-shadow: 0 0 30px rgba(102, 126, 234, 0.2);
         }
         
         .result-label {
             color: #888;
-            font-size: 14px;
+            font-size: 16px;
+            margin-bottom: 12px;
+            font-weight: bold;
+        }
+        
+        .winner-wrapper {
+            width: 100%;
+            text-align: center;
+            padding: 15px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
             margin-bottom: 10px;
         }
         
         .winner-text {
-            font-size: 28px;
+            font-size: 32px;
             font-weight: bold;
             color: #333;
             text-align: center;
             word-wrap: break-word;
             max-width: 100%;
             animation: fadeInUp 0.6s ease;
+            line-height: 1.4;
         }
         
         .winner-text.highlight {
@@ -171,12 +185,38 @@
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
+            font-size: 36px;
+            text-shadow: 0 2px 20px rgba(102, 126, 234, 0.3);
+        }
+        
+        /* إضافة تأثيرات إضافية للفائز */
+        .winner-text.highlight::before {
+            content: "🏆 ";
+            -webkit-text-fill-color: initial;
+            color: #fbbf24;
+        }
+        
+        .winner-text.highlight::after {
+            content: " 🏆";
+            -webkit-text-fill-color: initial;
+            color: #fbbf24;
         }
         
         .comment-count {
-            margin-top: 12px;
+            margin-top: 8px;
             color: #666;
-            font-size: 14px;
+            font-size: 15px;
+            font-weight: 500;
+            background: rgba(102, 126, 234, 0.1);
+            padding: 6px 16px;
+            border-radius: 20px;
+            display: inline-block;
+        }
+        
+        .winner-emoji {
+            font-size: 48px;
+            display: block;
+            margin-bottom: 5px;
         }
         
         .error-message {
@@ -209,6 +249,33 @@
             display: block;
         }
         
+        /* إضافة تأثيرات احتفالية */
+        .confetti-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 9999;
+            overflow: hidden;
+        }
+        
+        .confetti {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            top: -10px;
+            animation: confettiFall linear forwards;
+        }
+        
+        @keyframes confettiFall {
+            to {
+                transform: translateY(100vh) rotate(720deg);
+                opacity: 0;
+            }
+        }
+        
         /* Animations */
         @keyframes spin {
             0% { transform: rotate(0deg); }
@@ -218,11 +285,11 @@
         @keyframes fadeInUp {
             from {
                 opacity: 0;
-                transform: translateY(20px);
+                transform: translateY(30px) scale(0.9);
             }
             to {
                 opacity: 1;
-                transform: translateY(0);
+                transform: translateY(0) scale(1);
             }
         }
         
@@ -230,6 +297,15 @@
             0%, 100% { transform: translateX(0); }
             25% { transform: translateX(-10px); }
             75% { transform: translateX(10px); }
+        }
+        
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+        
+        .winner-text.highlight {
+            animation: fadeInUp 0.6s ease, pulse 2s ease-in-out infinite;
         }
         
         /* Responsive Design */
@@ -243,7 +319,11 @@
             }
             
             .winner-text {
-                font-size: 22px;
+                font-size: 24px;
+            }
+            
+            .winner-text.highlight {
+                font-size: 28px;
             }
             
             .button-group {
@@ -253,6 +333,14 @@
             button {
                 padding: 12px 20px;
                 font-size: 15px;
+            }
+            
+            .winner-emoji {
+                font-size: 36px;
+            }
+            
+            .winner-wrapper {
+                padding: 12px;
             }
         }
         
@@ -268,6 +356,10 @@
             input[type="text"] {
                 padding: 12px 14px;
                 font-size: 14px;
+            }
+            
+            .winner-text.highlight {
+                font-size: 22px;
             }
         }
     </style>
@@ -296,22 +388,30 @@
         
         <div class="result-container" id="resultContainer">
             <span class="result-label">🏆 الفائز هو</span>
-            <div class="winner-text" id="winnerText">...</div>
+            <div class="winner-wrapper" id="winnerWrapper">
+                <span class="winner-emoji" id="winnerEmoji">🎉</span>
+                <div class="winner-text" id="winnerText">...</div>
+            </div>
             <div class="comment-count" id="commentCount"></div>
         </div>
         
         <div class="error-message" id="errorMessage"></div>
     </div>
     
+    <!-- حاوية الكنفيتي -->
+    <div class="confetti-container" id="confettiContainer"></div>
+    
     <script>
         const videoUrlInput = document.getElementById('videoUrl');
         const pickBtn = document.getElementById('pickBtn');
         const resetBtn = document.getElementById('resetBtn');
         const winnerText = document.getElementById('winnerText');
+        const winnerEmoji = document.getElementById('winnerEmoji');
         const commentCount = document.getElementById('commentCount');
         const resultContainer = document.getElementById('resultContainer');
         const errorMessage = document.getElementById('errorMessage');
         const loader = document.getElementById('loader');
+        const confettiContainer = document.getElementById('confettiContainer');
         
         // إزالة حالة الفائز عند تغيير الرابط
         videoUrlInput.addEventListener('input', () => {
@@ -351,13 +451,18 @@
                 // عرض الفائز
                 winnerText.textContent = data.winner;
                 winnerText.className = 'winner-text highlight';
+                winnerEmoji.textContent = '🎉';
                 commentCount.textContent = `من بين ${data.total_comments} تعليق`;
                 resultContainer.classList.add('has-winner');
+                
+                // إظهار الكنفيتي
+                showConfetti();
                 
             } catch (error) {
                 showError(error.message);
                 winnerText.textContent = '❌';
                 winnerText.className = 'winner-text';
+                winnerEmoji.textContent = '😅';
             } finally {
                 pickBtn.disabled = false;
                 loader.classList.remove('show');
@@ -370,14 +475,17 @@
             resetResult();
             hideError();
             videoUrlInput.focus();
+            confettiContainer.innerHTML = '';
         });
         
         // دالة إعادة تعيين النتيجة
         function resetResult() {
             winnerText.textContent = '...';
             winnerText.className = 'winner-text';
+            winnerEmoji.textContent = '🎉';
             commentCount.textContent = '';
             resultContainer.classList.remove('has-winner');
+            confettiContainer.innerHTML = '';
         }
         
         // دالة عرض الخطأ
@@ -391,6 +499,30 @@
             errorMessage.classList.remove('show');
         }
         
+        // دالة إظهار الكنفيتي
+        function showConfetti() {
+            confettiContainer.innerHTML = '';
+            const colors = ['#667eea', '#764ba2', '#fbbf24', '#34d399', '#f472b6', '#60a5fa', '#fb923c'];
+            const shapes = ['●', '■', '▲', '★', '♦', '♥', '✦'];
+            
+            for (let i = 0; i < 60; i++) {
+                const confetti = document.createElement('div');
+                confetti.className = 'confetti';
+                confetti.textContent = shapes[Math.floor(Math.random() * shapes.length)];
+                confetti.style.left = Math.random() * 100 + '%';
+                confetti.style.color = colors[Math.floor(Math.random() * colors.length)];
+                confetti.style.fontSize = (Math.random() * 16 + 10) + 'px';
+                confetti.style.animationDuration = (Math.random() * 2 + 2) + 's';
+                confetti.style.animationDelay = (Math.random() * 1.5) + 's';
+                confettiContainer.appendChild(confetti);
+            }
+            
+            // إزالة الكنفيتي بعد 5 ثواني
+            setTimeout(() => {
+                confettiContainer.innerHTML = '';
+            }, 5000);
+        }
+        
         // الضغط على Enter لتشغيل الاختيار
         videoUrlInput.addEventListener('keypress', (e) => {
             if (e.key === 'Enter') {
@@ -398,7 +530,7 @@
             }
         });
         
-        // تحميل تلقائي للرابط من الحافظة (اختياري)
+        // تحميل تلقائي للرابط من الحافظة
         if (navigator.clipboard) {
             document.addEventListener('paste', async (e) => {
                 const text = await navigator.clipboard.readText();
