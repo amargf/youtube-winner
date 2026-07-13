@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>اختيار فائز عشوائي من يوتيوب</title>
     <style>
-        /* إعادة ضبط وتصميم أساسي */
         * {
             margin: 0;
             padding: 0;
@@ -169,7 +168,7 @@
             margin-bottom: 10px;
         }
         
-        .winner-text {
+        .winner-name {
             font-size: 32px;
             font-weight: bold;
             color: #333;
@@ -180,7 +179,7 @@
             line-height: 1.4;
         }
         
-        .winner-text.highlight {
+        .winner-name.highlight {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
@@ -189,17 +188,35 @@
             text-shadow: 0 2px 20px rgba(102, 126, 234, 0.3);
         }
         
-        /* إضافة تأثيرات إضافية للفائز */
-        .winner-text.highlight::before {
+        .winner-name.highlight::before {
             content: "🏆 ";
             -webkit-text-fill-color: initial;
             color: #fbbf24;
         }
         
-        .winner-text.highlight::after {
+        .winner-name.highlight::after {
             content: " 🏆";
             -webkit-text-fill-color: initial;
             color: #fbbf24;
+        }
+        
+        .winner-comment {
+            margin-top: 10px;
+            padding: 10px 15px;
+            background: #f0f0f0;
+            border-radius: 8px;
+            color: #555;
+            font-size: 15px;
+            border-right: 4px solid #667eea;
+            text-align: right;
+            font-style: italic;
+        }
+        
+        .winner-comment-label {
+            font-size: 12px;
+            color: #999;
+            display: block;
+            margin-bottom: 4px;
         }
         
         .comment-count {
@@ -249,7 +266,6 @@
             display: block;
         }
         
-        /* إضافة تأثيرات احتفالية */
         .confetti-container {
             position: fixed;
             top: 0;
@@ -276,7 +292,6 @@
             }
         }
         
-        /* Animations */
         @keyframes spin {
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
@@ -304,11 +319,10 @@
             50% { transform: scale(1.05); }
         }
         
-        .winner-text.highlight {
+        .winner-name.highlight {
             animation: fadeInUp 0.6s ease, pulse 2s ease-in-out infinite;
         }
         
-        /* Responsive Design */
         @media (max-width: 640px) {
             .container {
                 padding: 25px;
@@ -318,11 +332,11 @@
                 font-size: 22px;
             }
             
-            .winner-text {
+            .winner-name {
                 font-size: 24px;
             }
             
-            .winner-text.highlight {
+            .winner-name.highlight {
                 font-size: 28px;
             }
             
@@ -341,25 +355,6 @@
             
             .winner-wrapper {
                 padding: 12px;
-            }
-        }
-        
-        @media (max-width: 400px) {
-            .container {
-                padding: 20px;
-            }
-            
-            h1 {
-                font-size: 20px;
-            }
-            
-            input[type="text"] {
-                padding: 12px 14px;
-                font-size: 14px;
-            }
-            
-            .winner-text.highlight {
-                font-size: 22px;
             }
         }
     </style>
@@ -390,7 +385,11 @@
             <span class="result-label">🏆 الفائز هو</span>
             <div class="winner-wrapper" id="winnerWrapper">
                 <span class="winner-emoji" id="winnerEmoji">🎉</span>
-                <div class="winner-text" id="winnerText">...</div>
+                <div class="winner-name" id="winnerName">...</div>
+                <div class="winner-comment" id="winnerComment" style="display:none;">
+                    <span class="winner-comment-label">📝 التعليق:</span>
+                    <span id="commentText"></span>
+                </div>
             </div>
             <div class="comment-count" id="commentCount"></div>
         </div>
@@ -398,27 +397,26 @@
         <div class="error-message" id="errorMessage"></div>
     </div>
     
-    <!-- حاوية الكنفيتي -->
     <div class="confetti-container" id="confettiContainer"></div>
     
     <script>
         const videoUrlInput = document.getElementById('videoUrl');
         const pickBtn = document.getElementById('pickBtn');
         const resetBtn = document.getElementById('resetBtn');
-        const winnerText = document.getElementById('winnerText');
+        const winnerName = document.getElementById('winnerName');
         const winnerEmoji = document.getElementById('winnerEmoji');
+        const winnerComment = document.getElementById('winnerComment');
+        const commentText = document.getElementById('commentText');
         const commentCount = document.getElementById('commentCount');
         const resultContainer = document.getElementById('resultContainer');
         const errorMessage = document.getElementById('errorMessage');
         const loader = document.getElementById('loader');
         const confettiContainer = document.getElementById('confettiContainer');
         
-        // إزالة حالة الفائز عند تغيير الرابط
         videoUrlInput.addEventListener('input', () => {
             resetResult();
         });
         
-        // اختيار الفائز
         pickBtn.addEventListener('click', async () => {
             const videoUrl = videoUrlInput.value.trim();
             
@@ -427,7 +425,6 @@
                 return;
             }
             
-            // تعطيل الزر وعرض التحميل
             pickBtn.disabled = true;
             loader.classList.add('show');
             hideError();
@@ -448,28 +445,36 @@
                     throw new Error(data.error || 'حدث خطأ');
                 }
                 
-                // عرض الفائز
-                winnerText.textContent = data.winner;
-                winnerText.className = 'winner-text highlight';
+                // عرض اسم الفائز
+                winnerName.textContent = data.winner;
+                winnerName.className = 'winner-name highlight';
                 winnerEmoji.textContent = '🎉';
+                
+                // عرض التعليق إذا وجد
+                if (data.winner_comment) {
+                    commentText.textContent = data.winner_comment;
+                    winnerComment.style.display = 'block';
+                } else {
+                    winnerComment.style.display = 'none';
+                }
+                
                 commentCount.textContent = `من بين ${data.total_comments} تعليق`;
                 resultContainer.classList.add('has-winner');
                 
-                // إظهار الكنفيتي
                 showConfetti();
                 
             } catch (error) {
                 showError(error.message);
-                winnerText.textContent = '❌';
-                winnerText.className = 'winner-text';
+                winnerName.textContent = '❌';
+                winnerName.className = 'winner-name';
                 winnerEmoji.textContent = '😅';
+                winnerComment.style.display = 'none';
             } finally {
                 pickBtn.disabled = false;
                 loader.classList.remove('show');
             }
         });
         
-        // إعادة تعيين
         resetBtn.addEventListener('click', () => {
             videoUrlInput.value = '';
             resetResult();
@@ -478,28 +483,25 @@
             confettiContainer.innerHTML = '';
         });
         
-        // دالة إعادة تعيين النتيجة
         function resetResult() {
-            winnerText.textContent = '...';
-            winnerText.className = 'winner-text';
+            winnerName.textContent = '...';
+            winnerName.className = 'winner-name';
             winnerEmoji.textContent = '🎉';
+            winnerComment.style.display = 'none';
             commentCount.textContent = '';
             resultContainer.classList.remove('has-winner');
             confettiContainer.innerHTML = '';
         }
         
-        // دالة عرض الخطأ
         function showError(message) {
             errorMessage.textContent = message;
             errorMessage.classList.add('show');
         }
         
-        // دالة إخفاء الخطأ
         function hideError() {
             errorMessage.classList.remove('show');
         }
         
-        // دالة إظهار الكنفيتي
         function showConfetti() {
             confettiContainer.innerHTML = '';
             const colors = ['#667eea', '#764ba2', '#fbbf24', '#34d399', '#f472b6', '#60a5fa', '#fb923c'];
@@ -517,20 +519,17 @@
                 confettiContainer.appendChild(confetti);
             }
             
-            // إزالة الكنفيتي بعد 5 ثواني
             setTimeout(() => {
                 confettiContainer.innerHTML = '';
             }, 5000);
         }
         
-        // الضغط على Enter لتشغيل الاختيار
         videoUrlInput.addEventListener('keypress', (e) => {
             if (e.key === 'Enter') {
                 pickBtn.click();
             }
         });
         
-        // تحميل تلقائي للرابط من الحافظة
         if (navigator.clipboard) {
             document.addEventListener('paste', async (e) => {
                 const text = await navigator.clipboard.readText();
