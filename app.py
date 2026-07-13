@@ -36,38 +36,46 @@ def extract_video_id(url):
     return None
 
 
-def get_video_comments(video_id, max_results=100):
+def get_video_comments(video_id, max_results=500):
     """
     جلب تعليقات الفيديو مع أسماء المستخدمين
+    زيادة الحد الأقصى إلى 500 تعليق للحصول على نتائج أكثر
     """
     try:
-        request = youtube.commentThreads().list(
-            part='snippet',
-            videoId=video_id,
-            maxResults=max_results,
-            textFormat='plainText'
-        )
-        response = request.execute()
+        all_comments = []
+        next_page_token = None
         
-        comments = []
-        for item in response.get('items', []):
-            # استخراج معلومات التعليق
-            snippet = item['snippet']['topLevelComment']['snippet']
+        # جلب التعليقات مع دعم التصفح عبر الصفحات (Pagination)
+        while True:
+            request = youtube.commentThreads().list(
+                part='snippet',
+                videoId=video_id,
+                maxResults=min(max_results, 100),  # API يسمح بـ 100 كحد أقصى لكل طلب
+                pageToken=next_page_token,
+                textFormat='plainText'
+            )
+            response = request.execute()
             
-            # اسم المستخدم (صاحب التعليق)
-            author = snippet.get('authorDisplayName', 'مستخدم مجهول')
+            # استخراج التعليقات من الصفحة الحالية
+            for item in response.get('items', []):
+                snippet = item['snippet']['topLevelComment']['snippet']
+                author = snippet.get('authorDisplayName', 'مستخدم مجهول')
+                text = snippet.get('textDisplay', '').strip()
+                
+                all_comments.append({
+                    'author': author,
+                    'text': text,
+                    'full': f"{author}: {text}" if text else author
+                })
             
-            # نص التعليق
-            text = snippet.get('textDisplay', '').strip()
+            # التحقق من وجود صفحة تالية
+            next_page_token = response.get('nextPageToken')
             
-            # إضافة معلومات المستخدم مع التعليق
-            comments.append({
-                'author': author,
-                'text': text,
-                'full': f"{author}: {text}" if text else author
-            })
+            # التوقف إذا وصلنا للحد المطلوب أو لم توجد صفحات تالية
+            if not next_page_token or len(all_comments) >= max_results:
+                break
         
-        return comments
+        return all_comments
         
     except HttpError as e:
         error_reason = e.error_details[0]['reason'] if e.error_details else 'Unknown'
@@ -117,7 +125,8 @@ def pick_winner():
         if not video_id:
             return jsonify({'error': 'رابط الفيديو غير صالح'}), 400
         
-        comments = get_video_comments(video_id)
+        # جلب التعليقات (الحد الأقصى 500)
+        comments = get_video_comments(video_id, max_results=500)
         
         if not comments:
             return jsonify({'error': 'لا توجد تعليقات لعرضها'}), 404
@@ -134,10 +143,10 @@ def pick_winner():
         # إرجاع البيانات
         return jsonify({
             'success': True,
-            'winner': winner_data['author'],  # اسم المستخدم فقط
-            'winner_comment': winner_data['text'],  # نص التعليق
-            'total_comments': total_comments,  # العدد الفعلي للتعليقات
-            'has_comments': total_comments > 0  # هل يوجد تعليقات
+            'winner': winner_data['author'],
+            'winner_comment': winner_data['text'],
+            'total_comments': total_comments,
+            'has_comments': total_comments > 0
         })
         
     except ValueError as e:
