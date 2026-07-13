@@ -128,13 +128,16 @@ def pick_winner():
         # اختيار الفائز
         winner_data = choose_random_winner(comments)
         
-        # إرجاع اسم المستخدم مع التعليق
+        # حساب عدد التعليقات الفعلي
+        total_comments = len(comments)
+        
+        # إرجاع البيانات
         return jsonify({
             'success': True,
             'winner': winner_data['author'],  # اسم المستخدم فقط
-            'winner_comment': winner_data['text'],  # نص التعليق (اختياري)
-            'winner_full': winner_data['full'],  # الاسم + التعليق (للنسخ الاحتياطي)
-            'total_comments': len(comments)
+            'winner_comment': winner_data['text'],  # نص التعليق
+            'total_comments': total_comments,  # العدد الفعلي للتعليقات
+            'has_comments': total_comments > 0  # هل يوجد تعليقات
         })
         
     except ValueError as e:
