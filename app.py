@@ -1,6 +1,7 @@
 import re
 import random
 import time
+import os
 from flask import Flask, request, jsonify, render_template
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
@@ -19,7 +20,6 @@ def extract_video_id(url):
     استخراج video_id من أي نوع من روابط يوتيوب
     يدعم: الروابط الطويلة، القصيرة، والمضمنة
     """
-    # أنماط الروابط المختلفة
     patterns = [
         r'(?:youtube\.com\/watch\?v=)([\w-]+)',
         r'(?:youtu\.be\/)([\w-]+)',
@@ -42,7 +42,6 @@ def get_video_comments(video_id, max_results=100):
     جلب تعليقات الفيديو باستخدام YouTube API
     """
     try:
-        # جلب التعليقات من API
         request = youtube.commentThreads().list(
             part='snippet',
             videoId=video_id,
@@ -51,17 +50,15 @@ def get_video_comments(video_id, max_results=100):
         )
         response = request.execute()
         
-        # استخراج النصوص من التعليقات
         comments = []
         for item in response.get('items', []):
             comment = item['snippet']['topLevelComment']['snippet']['textDisplay']
-            if comment.strip():  # تجاهل التعليقات الفارغة
+            if comment.strip():
                 comments.append(comment)
         
         return comments
         
     except HttpError as e:
-        # معالجة أخطاء API
         error_reason = e.error_details[0]['reason'] if e.error_details else 'Unknown'
         error_message = e.error_details[0]['message'] if e.error_details else str(e)
         
@@ -105,21 +102,17 @@ def pick_winner():
         if not video_url:
             return jsonify({'error': 'الرجاء إدخال رابط الفيديو'}), 400
         
-        # استخراج video_id
         video_id = extract_video_id(video_url)
         if not video_id:
             return jsonify({'error': 'رابط الفيديو غير صالح'}), 400
         
-        # جلب التعليقات
         comments = get_video_comments(video_id)
         
         if not comments:
             return jsonify({'error': 'لا توجد تعليقات لعرضها'}), 404
         
-        # محاكاة تأخير لمدة ثانيتين
         time.sleep(2)
         
-        # اختيار الفائز
         winner = choose_random_winner(comments)
         
         return jsonify({
@@ -135,4 +128,6 @@ def pick_winner():
 
 
 if __name__ == '__main__':
-    app.run(debug=True, host='0.0.0.0', port=5000)
+    # للحصول على أفضل أداء على Render
+    port = int(os.environ.get('PORT', 5000))
+    app.run(host='0.0.0.0', port=port, debug=False)
