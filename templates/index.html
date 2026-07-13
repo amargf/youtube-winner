@@ -2,25 +2,411 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <title>مختار الفائزين الاحترافي</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>اختيار فائز عشوائي من يوتيوب</title>
     <style>
-        body { font-family: sans-serif; text-align: center; background: #f4f4f9; padding: 50px; }
-        .card { background: white; padding: 30px; border-radius: 15px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); display: inline-block; }
-        input { padding: 10px; width: 300px; border: 1px solid #ddd; border-radius: 5px; }
-        button { padding: 10px 20px; background: #ff0000; color: white; border: none; border-radius: 5px; cursor: pointer; }
-        .winner { margin-top: 20px; color: #2ecc71; font-size: 24px; font-weight: bold; }
+        /* إعادة ضبط وتصميم أساسي */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Tahoma', 'Arial', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            margin: 0;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            max-width: 600px;
+            width: 100%;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            transition: transform 0.3s ease;
+        }
+        
+        .container:hover {
+            transform: translateY(-5px);
+        }
+        
+        h1 {
+            color: #333;
+            font-size: 28px;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+        
+        .subtitle {
+            color: #666;
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 16px;
+        }
+        
+        .input-group {
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            color: #555;
+            font-weight: bold;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+        
+        input[type="text"] {
+            width: 100%;
+            padding: 14px 18px;
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            background: #f8f9fa;
+            color: #333;
+            font-family: inherit;
+        }
+        
+        input[type="text"]:focus {
+            outline: none;
+            border-color: #667eea;
+            background: white;
+            box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
+        }
+        
+        input[type="text"]::placeholder {
+            color: #aaa;
+            font-size: 14px;
+        }
+        
+        .button-group {
+            display: flex;
+            gap: 12px;
+            margin-top: 5px;
+        }
+        
+        button {
+            flex: 1;
+            padding: 14px 24px;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-family: inherit;
+            color: white;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        
+        .btn-primary:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+        }
+        
+        .btn-primary:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .btn-secondary {
+            background: #6c757d;
+        }
+        
+        .btn-secondary:hover:not(:disabled) {
+            background: #5a6268;
+            transform: translateY(-2px);
+        }
+        
+        .result-container {
+            margin-top: 30px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 12px;
+            min-height: 100px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            border: 2px dashed #e0e0e0;
+            transition: all 0.5s ease;
+        }
+        
+        .result-container.has-winner {
+            border-color: #667eea;
+            background: linear-gradient(135deg, #f8f9fa 0%, #eef1ff 100%);
+            border-style: solid;
+        }
+        
+        .result-label {
+            color: #888;
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+        
+        .winner-text {
+            font-size: 28px;
+            font-weight: bold;
+            color: #333;
+            text-align: center;
+            word-wrap: break-word;
+            max-width: 100%;
+            animation: fadeInUp 0.6s ease;
+        }
+        
+        .winner-text.highlight {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .comment-count {
+            margin-top: 12px;
+            color: #666;
+            font-size: 14px;
+        }
+        
+        .error-message {
+            color: #dc3545;
+            text-align: center;
+            padding: 10px;
+            background: #fde8e8;
+            border-radius: 8px;
+            margin-top: 10px;
+            display: none;
+        }
+        
+        .error-message.show {
+            display: block;
+            animation: shake 0.5s ease;
+        }
+        
+        .loader {
+            display: none;
+            width: 40px;
+            height: 40px;
+            margin: 10px auto;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        .loader.show {
+            display: block;
+        }
+        
+        /* Animations */
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-10px); }
+            75% { transform: translateX(10px); }
+        }
+        
+        /* Responsive Design */
+        @media (max-width: 640px) {
+            .container {
+                padding: 25px;
+            }
+            
+            h1 {
+                font-size: 22px;
+            }
+            
+            .winner-text {
+                font-size: 22px;
+            }
+            
+            .button-group {
+                flex-direction: column;
+            }
+            
+            button {
+                padding: 12px 20px;
+                font-size: 15px;
+            }
+        }
+        
+        @media (max-width: 400px) {
+            .container {
+                padding: 20px;
+            }
+            
+            h1 {
+                font-size: 20px;
+            }
+            
+            input[type="text"] {
+                padding: 12px 14px;
+                font-size: 14px;
+            }
+        }
     </style>
 </head>
 <body>
-    <div class="card">
-        <h1>YouTube Winner Picker</h1>
-        <form method="POST">
-            <input type="text" name="video_id" placeholder="أدخل رابط الفيديو هنا..." required>
-            <button type="submit">بدء الاختيار</button>
-        </form>
-        {% if winner %}
-            <div class="winner">🎉 الفائز هو: {{ winner }}</div>
-        {% endif %}
+    <div class="container">
+        <h1>🎯 اختيار فائز عشوائي</h1>
+        <p class="subtitle">من تعليقات فيديو يوتيوب</p>
+        
+        <div class="input-group">
+            <label for="videoUrl">رابط فيديو يوتيوب</label>
+            <input 
+                type="text" 
+                id="videoUrl" 
+                placeholder="أدخل رابط الفيديو هنا..."
+                dir="ltr"
+            >
+        </div>
+        
+        <div class="button-group">
+            <button class="btn-primary" id="pickBtn">🎲 اختر الفائز</button>
+            <button class="btn-secondary" id="resetBtn">🔄 إعادة تعيين</button>
+        </div>
+        
+        <div class="loader" id="loader"></div>
+        
+        <div class="result-container" id="resultContainer">
+            <span class="result-label">🏆 الفائز هو</span>
+            <div class="winner-text" id="winnerText">...</div>
+            <div class="comment-count" id="commentCount"></div>
+        </div>
+        
+        <div class="error-message" id="errorMessage"></div>
     </div>
+    
+    <script>
+        const videoUrlInput = document.getElementById('videoUrl');
+        const pickBtn = document.getElementById('pickBtn');
+        const resetBtn = document.getElementById('resetBtn');
+        const winnerText = document.getElementById('winnerText');
+        const commentCount = document.getElementById('commentCount');
+        const resultContainer = document.getElementById('resultContainer');
+        const errorMessage = document.getElementById('errorMessage');
+        const loader = document.getElementById('loader');
+        
+        // إزالة حالة الفائز عند تغيير الرابط
+        videoUrlInput.addEventListener('input', () => {
+            resetResult();
+        });
+        
+        // اختيار الفائز
+        pickBtn.addEventListener('click', async () => {
+            const videoUrl = videoUrlInput.value.trim();
+            
+            if (!videoUrl) {
+                showError('الرجاء إدخال رابط الفيديو');
+                return;
+            }
+            
+            // تعطيل الزر وعرض التحميل
+            pickBtn.disabled = true;
+            loader.classList.add('show');
+            hideError();
+            resetResult();
+            
+            try {
+                const response = await fetch('/api/pick-winner', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ video_url: videoUrl })
+                });
+                
+                const data = await response.json();
+                
+                if (!response.ok) {
+                    throw new Error(data.error || 'حدث خطأ');
+                }
+                
+                // عرض الفائز
+                winnerText.textContent = data.winner;
+                winnerText.className = 'winner-text highlight';
+                commentCount.textContent = `من بين ${data.total_comments} تعليق`;
+                resultContainer.classList.add('has-winner');
+                
+            } catch (error) {
+                showError(error.message);
+                winnerText.textContent = '❌';
+                winnerText.className = 'winner-text';
+            } finally {
+                pickBtn.disabled = false;
+                loader.classList.remove('show');
+            }
+        });
+        
+        // إعادة تعيين
+        resetBtn.addEventListener('click', () => {
+            videoUrlInput.value = '';
+            resetResult();
+            hideError();
+            videoUrlInput.focus();
+        });
+        
+        // دالة إعادة تعيين النتيجة
+        function resetResult() {
+            winnerText.textContent = '...';
+            winnerText.className = 'winner-text';
+            commentCount.textContent = '';
+            resultContainer.classList.remove('has-winner');
+        }
+        
+        // دالة عرض الخطأ
+        function showError(message) {
+            errorMessage.textContent = message;
+            errorMessage.classList.add('show');
+        }
+        
+        // دالة إخفاء الخطأ
+        function hideError() {
+            errorMessage.classList.remove('show');
+        }
+        
+        // الضغط على Enter لتشغيل الاختيار
+        videoUrlInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                pickBtn.click();
+            }
+        });
+        
+        // تحميل تلقائي للرابط من الحافظة (اختياري)
+        if (navigator.clipboard) {
+            document.addEventListener('paste', async (e) => {
+                const text = await navigator.clipboard.readText();
+                if (text.includes('youtube.com') || text.includes('youtu.be')) {
+                    videoUrlInput.value = text;
+                }
+            });
+        }
+    </script>
 </body>
 </html>
