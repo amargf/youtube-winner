@@ -9,7 +9,7 @@ from googleapiclient.errors import HttpError
 app = Flask(__name__)
 
 # مفتاح API الخاص بي
-API_KEY = "AIzaSyA5MT34MOeGs5GBaAq7NapIf5_RAox4UYs"
+API_KEY = "AIzaSy"
 
 # تهيئة خدمة YouTube
 youtube = build('youtube', 'v3', developerKey=API_KEY)
